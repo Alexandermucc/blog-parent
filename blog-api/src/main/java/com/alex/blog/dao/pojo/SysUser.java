@@ -1,0 +1,40 @@
+package com.alex.blog.dao.pojo;
+
+/**
+ * @author Alexandermucc
+ * @date 2022/3/12 - 17:48 - 周六
+ **/
+
+import lombok.Data;
+
+@Data
+public class SysUser {
+
+    private Long id;
+
+    private String account;
+
+    private Integer admin;
+
+    private String avatar;
+
+    private Long createDate;
+
+    private Integer deleted;
+
+    private String email;
+
+    private Long lastLogin;
+
+    private String mobilePhoneNumber;
+
+    private String nickname;
+
+    private String password;
+
+    private String salt;
+
+    private String status;
+}
+
+
