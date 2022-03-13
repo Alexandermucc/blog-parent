@@ -9,11 +9,11 @@ import com.alex.blog.vo.Result;
 import com.alex.blog.vo.params.LoginParam;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import org.apache.commons.codec.cli.Digest;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
 
@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
  **/
 
 @Service
+@Transactional
 public class LoginServiceImpl implements LoginService {
 
 
@@ -37,6 +38,7 @@ public class LoginServiceImpl implements LoginService {
 
     /**
      * 登录功能实现
+     *
      * @param loginParam
      * @return
      */
@@ -54,7 +56,7 @@ public class LoginServiceImpl implements LoginService {
         String account = loginParam.getAccount();
         String password = loginParam.getPassword();
 
-        if(StringUtils.isBlank(account) || StringUtils.isBlank(password)){
+        if (StringUtils.isBlank(account) || StringUtils.isBlank(password)) {
             return Result.failure(ErrorCode.PARAMS_ERROR.getCode(), ErrorCode.PARAMS_ERROR.getMsg());
         }
 
@@ -63,25 +65,83 @@ public class LoginServiceImpl implements LoginService {
 
         SysUser sysUser = sysUserService.findUser(account, password);
 
-        if (sysUser == null){
+        if (sysUser == null) {
             return Result.failure(ErrorCode.ACCOUNT_PWD_NOT_EXIST.getCode(), ErrorCode.ACCOUNT_PWD_NOT_EXIST.getMsg());
         }
 
 
         String token = JWTUtils.createToken(sysUser.getId());
-        redisTemplate.opsForValue().set("TOKEN_"+token, JSON.toJSONString(sysUser),1, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set("TOKEN_" + token, JSON.toJSONString(sysUser), 1, TimeUnit.DAYS);
 
         return Result.success(token);
     }
 
     /**
      * 退出登录
+     *
      * @param token
      * @return
      */
     @Override
     public Result logout(String token) {
-        redisTemplate.delete("TOKEN_"+token);
+        redisTemplate.delete("TOKEN_" + token);
         return Result.success(null);
+    }
+
+    /**
+     * 登录功能
+     *
+     * @param loginParam
+     * @return
+     */
+    @Override
+    public Result register(LoginParam loginParam) {
+        /**
+         * 1. 判断参数是否合法
+         * 2. 判断账号是否存在
+         * 3. 如果账户不存在，注册账户
+         * 4. 生成token
+         * 5. 存入token，并返回
+         * 6. 注意： 加上事务，一旦中间的任何过程出现问题，注册的用户需要回滚
+         */
+        String account = loginParam.getAccount();
+        String password = loginParam.getPassword();
+        String nickname = loginParam.getNickname();
+        if (StringUtils.isBlank(account)
+                || StringUtils.isBlank(password)
+                || StringUtils.isBlank(nickname)
+        ) {
+            return Result.failure(ErrorCode.PARAMS_ERROR.getCode(), ErrorCode.PARAMS_ERROR.getMsg());
+        }
+
+
+        SysUser sysUser = sysUserService.findUserByAccount(account);
+
+        if(sysUser != null) {
+            return Result.failure(ErrorCode.ACCOUNT_EXIST.getCode(), ErrorCode.ACCOUNT_EXIST.getMsg());
+        }
+
+        sysUser = new SysUser();
+        sysUser.setNickname(nickname);
+        sysUser.setAccount(account);
+        // 需要保持一致
+        sysUser.setPassword(DigestUtils.md5Hex(password+slat));
+        sysUser.setCreateDate(System.currentTimeMillis());
+        sysUser.setLastLogin(System.currentTimeMillis());
+        sysUser.setAvatar("/static/img/logo.b3a48c0.png");
+        sysUser.setAdmin(1); //1 为true
+        sysUser.setDeleted(0); // 0 为false
+        sysUser.setSalt("");
+        sysUser.setStatus("");
+        sysUser.setEmail("");
+        this.sysUserService.save(sysUser);
+
+
+        //token
+        String token = JWTUtils.createToken(sysUser.getId());
+
+        redisTemplate.opsForValue().set("TOKEN_"+token, JSON.toJSONString(sysUser),1, TimeUnit.DAYS);
+
+        return Result.success(token);
     }
 }

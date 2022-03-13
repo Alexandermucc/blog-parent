@@ -78,4 +78,30 @@ public class SysUserServiceImpl implements SysUserService {
         loginUserVo.setAccount(sysUser.getAccount());
         return Result.success(loginUserVo);
     }
+
+    /**
+     * 根据账户保存用户
+     * @param account
+     * @return
+     */
+    @Override
+    public SysUser findUserByAccount(String account) {
+        LambdaQueryWrapper<SysUser> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysUser::getAccount,account);
+        queryWrapper.last("limit 1");
+        return sysUserMapper.selectOne(queryWrapper);
+    }
+
+    /**
+     * 保存用户
+     * @param sysUser
+     */
+    @Override
+    public void save(SysUser sysUser) {
+
+        // 保存用户时 id会自动生成
+        // 默认生成的id是 分布式id 雪花算法
+        sysUserMapper.insert(sysUser);
+
+    }
 }
