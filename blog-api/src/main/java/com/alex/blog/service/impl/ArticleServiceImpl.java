@@ -1,11 +1,15 @@
 package com.alex.blog.service.impl;
 
 import com.alex.blog.dao.dos.Archives;
+import com.alex.blog.dao.mapper.ArticleBodyMapper;
 import com.alex.blog.dao.mapper.ArticleMapper;
 import com.alex.blog.dao.pojo.Article;
+import com.alex.blog.dao.pojo.ArticleBody;
 import com.alex.blog.service.ArticleService;
+import com.alex.blog.service.CategoryService;
 import com.alex.blog.service.SysUserService;
 import com.alex.blog.service.TagService;
+import com.alex.blog.vo.ArticleBodyVo;
 import com.alex.blog.vo.ArticleVo;
 import com.alex.blog.vo.Result;
 import com.alex.blog.vo.params.PageParams;
@@ -35,6 +39,9 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Autowired
     private SysUserService sysUserService;
+
+    @Autowired
+    private CategoryService categoryService;
 
     /**
      * 1. 分页查询 article数据库表
@@ -96,6 +103,24 @@ public class ArticleServiceImpl implements ArticleService {
         return Result.success(archivesList);
     }
 
+
+    @Override
+    public Result findArticleById(Long articleId) {
+        /**
+         * 1. 根据id查询 文章信息
+         * 2. 根据bodyId和categoryid 去做关联查询
+         */
+        Article article = this.articleMapper.selectById(articleId);
+        ArticleVo articleVo = copy(article, true, true,true,true);
+        //查看完文章了，新增阅读数，有没有问题呢？
+        //查看完文章之后，本应该直接返回数据了，这时候做了一个更新操作，更新时加写锁，阻塞其他的读操作，性能就会比较低
+        // 更新 增加了此次接口的 耗时 如果一旦更新出问题，不能影响 查看文章的操作
+        //线程池  可以把更新操作 扔到线程池中去执行，和主线程就不相关了
+        //threadService.updateArticleViewCount(articleMapper,article);
+        return Result.success(articleVo);
+    }
+
+
     /**
      * 将Article的List数组转换为ArticleVo的List数组
      *
@@ -105,7 +130,23 @@ public class ArticleServiceImpl implements ArticleService {
     private List<ArticleVo> copyList(List<Article> records, boolean isTag, boolean isAuthor) {
         List<ArticleVo> articleVoList = new ArrayList<>();
         for (Article record : records) {
-            articleVoList.add(copy(record, isTag, isAuthor));
+            articleVoList.add(copy(record, isTag, isAuthor,false,false));
+        }
+
+        return articleVoList;
+    }
+
+
+    /**
+     * 将Article的List数组转换为ArticleVo的List数组
+     *
+     * @param records
+     * @return
+     */
+    private List<ArticleVo> copyList(List<Article> records, boolean isTag, boolean isAuthor, boolean isBody, boolean isCategory) {
+        List<ArticleVo> articleVoList = new ArrayList<>();
+        for (Article record : records) {
+            articleVoList.add(copy(record, isTag, isAuthor,false,false));
         }
 
         return articleVoList;
@@ -118,7 +159,7 @@ public class ArticleServiceImpl implements ArticleService {
      * @param article
      * @return
      */
-    private ArticleVo copy(Article article, boolean isTag, boolean isAuthor) {
+    private ArticleVo copy(Article article, boolean isTag, boolean isAuthor, boolean isBody, boolean isCategory) {
         ArticleVo articleVo = new ArticleVo();
         BeanUtils.copyProperties(article, articleVo);
 
@@ -132,6 +173,28 @@ public class ArticleServiceImpl implements ArticleService {
             Long authorId = article.getAuthorId();
             articleVo.setAuthor(sysUserService.findUserById(authorId).getNickname());
         }
+
+        if(isBody){
+            Long bodyId = article.getBodyId();
+            articleVo.setBody(findArticleBodyById(bodyId));
+        }
+
+        if(isCategory){
+            Long categoryId = article.getCategoryId();
+            articleVo.setCategory(categoryService.findCategoryById(categoryId));
+        }
+
         return articleVo;
+    }
+
+
+    @Autowired
+    private ArticleBodyMapper articleBodyMapper;
+
+    private ArticleBodyVo findArticleBodyById(Long bodyId) {
+        ArticleBody articleBody = articleBodyMapper.selectById(bodyId);
+        ArticleBodyVo articleBodyVo = new ArticleBodyVo();
+        articleBodyVo.setContent(articleBody.getContent());
+        return articleBodyVo;
     }
 }
