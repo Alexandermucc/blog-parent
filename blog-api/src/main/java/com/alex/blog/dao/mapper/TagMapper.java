@@ -2,6 +2,7 @@ package com.alex.blog.dao.mapper;
 
 import com.alex.blog.dao.pojo.Tag;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
@@ -9,6 +10,7 @@ import java.util.List;
  * @author Alexandermucc
  * @date 2022/3/12 - 17:49 - 周六
  **/
+@Mapper
 public interface TagMapper extends BaseMapper<Tag> {
 
     /**
