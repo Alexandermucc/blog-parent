@@ -1,6 +1,7 @@
 package com.alex.blog.service;
 
 import com.alex.blog.vo.Result;
+import com.alex.blog.vo.params.ArticleParam;
 import com.alex.blog.vo.params.PageParams;
 import org.springframework.stereotype.Service;
 
@@ -46,4 +47,10 @@ public interface ArticleService {
      */
     Result findArticleById(Long articleId);
 
+    /**
+     * 发布文章
+     * @param articleParam
+     * @return
+     */
+    Result publish(ArticleParam articleParam);
 }

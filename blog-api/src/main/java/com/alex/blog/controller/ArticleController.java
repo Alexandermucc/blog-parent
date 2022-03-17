@@ -2,6 +2,7 @@ package com.alex.blog.controller;
 
 import com.alex.blog.service.ArticleService;
 import com.alex.blog.vo.Result;
+import com.alex.blog.vo.params.ArticleParam;
 import com.alex.blog.vo.params.PageParams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -65,6 +66,16 @@ public class ArticleController {
     @PostMapping("view/{id}")
     public Result findArticleById(@PathVariable("id") Long articleId){
         return articleService.findArticleById(articleId);
+    }
+
+    /**
+     * 发布文章
+     * @param articleParam
+     * @return
+     */
+    @PostMapping("publish")
+    public Result publish(@RequestBody ArticleParam articleParam){
+        return articleService.publish(articleParam);
     }
 
 

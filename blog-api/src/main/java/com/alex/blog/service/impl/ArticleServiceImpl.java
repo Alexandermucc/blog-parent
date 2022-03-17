@@ -3,12 +3,18 @@ package com.alex.blog.service.impl;
 import com.alex.blog.dao.dos.Archives;
 import com.alex.blog.dao.mapper.ArticleBodyMapper;
 import com.alex.blog.dao.mapper.ArticleMapper;
+import com.alex.blog.dao.mapper.ArticleTagMapper;
 import com.alex.blog.dao.pojo.Article;
 import com.alex.blog.dao.pojo.ArticleBody;
+import com.alex.blog.dao.pojo.ArticleTag;
+import com.alex.blog.dao.pojo.SysUser;
 import com.alex.blog.service.*;
+import com.alex.blog.utils.UserThreadLocal;
 import com.alex.blog.vo.ArticleBodyVo;
 import com.alex.blog.vo.ArticleVo;
 import com.alex.blog.vo.Result;
+import com.alex.blog.vo.TagVo;
+import com.alex.blog.vo.params.ArticleParam;
 import com.alex.blog.vo.params.PageParams;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -16,6 +22,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +33,6 @@ import java.util.List;
  **/
 @Service
 public class ArticleServiceImpl implements ArticleService {
-
 
     @Autowired
     private ArticleMapper articleMapper;
@@ -42,6 +48,12 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Autowired
     private ThreadService threadService;
+
+    @Autowired
+    private ArticleTagMapper articleTagMapper;
+
+    @Autowired
+    private ArticleBodyMapper articleBodyMapper;
 
     /**
      * 1. 分页查询 article数据库表
@@ -120,6 +132,69 @@ public class ArticleServiceImpl implements ArticleService {
         return Result.success(articleVo);
     }
 
+    /**
+     * 发布文章
+     * @param articleParam
+     * @return
+     */
+    @Override
+    @Transactional
+    public Result publish(ArticleParam articleParam) {
+        //注意想要拿到数据必须将接口加入拦截器
+        SysUser sysUser = UserThreadLocal.get();
+
+        /**
+         * 1. 发布文章 目的 构建Article对象
+         * 2. 作者id  当前的登录用户
+         * 3. 标签  要将标签加入到 关联列表当中
+         * 4. body 内容存储 article bodyId
+         */
+        Article article = new Article();
+        article.setAuthorId(sysUser.getId());
+        article.setCategoryId(articleParam.getCategory().getId());
+        article.setCreateDate(System.currentTimeMillis());
+        article.setCommentCounts(0);
+        article.setSummary(articleParam.getSummary());
+        article.setTitle(articleParam.getTitle());
+        article.setViewCounts(0);
+        article.setWeight(Article.Article_Common);
+        article.setBodyId(-1L);
+        //插入之后 会生成一个文章id（因为新建的文章没有文章id所以要insert一下
+        //官网解释："insert后主键会自动'set到实体的ID字段。所以你只需要"getid()就好
+//        利用主键自增，mp的insert操作后id值会回到参数对象中
+        //https://blog.csdn.net/HSJ0170/article/details/107982866
+        this.articleMapper.insert(article);
+
+        //tags
+        List<TagVo> tags = articleParam.getTags();
+        if (tags != null) {
+            for (TagVo tag : tags) {
+                ArticleTag articleTag = new ArticleTag();
+                articleTag.setArticleId(article.getId());
+                articleTag.setTagId(tag.getId());
+                this.articleTagMapper.insert(articleTag);
+            }
+        }
+        //body
+        ArticleBody articleBody = new ArticleBody();
+        articleBody.setContent(articleParam.getBody().getContent());
+        articleBody.setContentHtml(articleParam.getBody().getContentHtml());
+        articleBody.setArticleId(article.getId());
+        articleBodyMapper.insert(articleBody);
+//插入完之后再给一个id
+        article.setBodyId(articleBody.getId());
+        //MybatisPlus中的save方法什么时候执行insert，什么时候执行update
+        // https://www.cxyzjd.com/article/Horse7/103868144
+        //只有当更改数据库时才插入或者更新，一般查询就可以了
+        articleMapper.updateById(article);
+
+        ArticleVo articleVo = new ArticleVo();
+        articleVo.setId(article.getId());
+        return Result.success(articleVo);
+    }
+
+
+
 
     /**
      * 将Article的List数组转换为ArticleVo的List数组
@@ -188,8 +263,6 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
 
-    @Autowired
-    private ArticleBodyMapper articleBodyMapper;
 
     private ArticleBodyVo findArticleBodyById(Long bodyId) {
         ArticleBody articleBody = articleBodyMapper.selectById(bodyId);

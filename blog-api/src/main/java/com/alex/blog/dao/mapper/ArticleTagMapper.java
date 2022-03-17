@@ -1,10 +1,9 @@
 package com.alex.blog.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.alex.blog.dao.pojo.ArticleBody;
+import com.alex.blog.dao.pojo.ArticleTag;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface ArticleBodyMapper extends BaseMapper<ArticleBody> {
+public interface ArticleTagMapper  extends BaseMapper<ArticleTag> {
 }
-
