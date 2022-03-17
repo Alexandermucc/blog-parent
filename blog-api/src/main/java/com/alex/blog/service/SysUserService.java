@@ -2,6 +2,7 @@ package com.alex.blog.service;
 
 import com.alex.blog.dao.pojo.SysUser;
 import com.alex.blog.vo.Result;
+import com.alex.blog.vo.UserVo;
 
 /**
  * @author Alexandermucc
@@ -24,4 +25,7 @@ public interface SysUserService {
 
     // 保存用户
     void save(SysUser sysUser);
+
+    // 通过id查询UserVo
+    UserVo findUserVoById(Long authorId);
 }

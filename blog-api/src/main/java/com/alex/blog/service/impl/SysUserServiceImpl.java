@@ -7,6 +7,7 @@ import com.alex.blog.service.TokenService;
 import com.alex.blog.vo.ErrorCode;
 import com.alex.blog.vo.LoginUserVo;
 import com.alex.blog.vo.Result;
+import com.alex.blog.vo.UserVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,4 +105,27 @@ public class SysUserServiceImpl implements SysUserService {
         sysUserMapper.insert(sysUser);
 
     }
+
+    /**
+     * 根据id 查询对应UserVo对象
+     * @param id
+     * @return
+     */
+
+    @Override
+    public UserVo findUserVoById(Long id) {
+        SysUser sysUser = sysUserMapper.selectById(id);
+        if (sysUser == null){
+            sysUser = new SysUser();
+            sysUser.setId(1L);
+            sysUser.setAvatar("/static/img/logo.b3a48c0.png");
+            sysUser.setNickname("码神之路");
+        }
+        UserVo userVo = new UserVo();
+        userVo.setAvatar(sysUser.getAvatar());
+        userVo.setNickname(sysUser.getNickname());
+        userVo.setId(sysUser.getId());
+        return userVo;
+    }
+
 }
