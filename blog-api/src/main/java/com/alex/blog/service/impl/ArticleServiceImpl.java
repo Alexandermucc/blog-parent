@@ -5,10 +5,7 @@ import com.alex.blog.dao.mapper.ArticleBodyMapper;
 import com.alex.blog.dao.mapper.ArticleMapper;
 import com.alex.blog.dao.pojo.Article;
 import com.alex.blog.dao.pojo.ArticleBody;
-import com.alex.blog.service.ArticleService;
-import com.alex.blog.service.CategoryService;
-import com.alex.blog.service.SysUserService;
-import com.alex.blog.service.TagService;
+import com.alex.blog.service.*;
 import com.alex.blog.vo.ArticleBodyVo;
 import com.alex.blog.vo.ArticleVo;
 import com.alex.blog.vo.Result;
@@ -42,6 +39,9 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private ThreadService threadService;
 
     /**
      * 1. 分页查询 article数据库表
@@ -116,7 +116,7 @@ public class ArticleServiceImpl implements ArticleService {
         //查看完文章之后，本应该直接返回数据了，这时候做了一个更新操作，更新时加写锁，阻塞其他的读操作，性能就会比较低
         // 更新 增加了此次接口的 耗时 如果一旦更新出问题，不能影响 查看文章的操作
         //线程池  可以把更新操作 扔到线程池中去执行，和主线程就不相关了
-        //threadService.updateArticleViewCount(articleMapper,article);
+        threadService.updateArticleViewCount(articleMapper,article);
         return Result.success(articleVo);
     }
 
