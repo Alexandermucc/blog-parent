@@ -1,17 +1,23 @@
 package com.alex.blog.service.impl;
+
 import com.alex.blog.dao.mapper.CommentMapper;
+import com.alex.blog.dao.pojo.SysUser;
 import com.alex.blog.service.CommentsService;
 import com.alex.blog.service.SysUserService;
+import com.alex.blog.utils.UserThreadLocal;
 import com.alex.blog.vo.CommentVo;
 import com.alex.blog.vo.Result;
 import com.alex.blog.vo.UserVo;
+import com.alex.blog.vo.params.CommentParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.alex.blog.dao.pojo.Comment;
 import org.springframework.beans.BeanUtils;
+
 import java.util.ArrayList;
 import java.util.List;
+
 /**
  * @author Alexandermucc
  * @date 2022/3/17 - 18:17 - 周四
@@ -42,6 +48,30 @@ public class CommentsServiceImpl implements CommentsService {
 
         List<CommentVo> commentVoList = copyList(comments);
         return Result.success(commentVoList);
+    }
+
+
+    @Override
+    public Result comment(CommentParam commentParam) {
+        //拿到当前用户
+        SysUser sysUser = UserThreadLocal.get();
+        Comment comment = new Comment();
+        comment.setArticleId(commentParam.getArticleId());
+        comment.setAuthorId(sysUser.getId());
+        comment.setContent(commentParam.getContent());
+        comment.setCreateDate(System.currentTimeMillis());
+        Long parent = commentParam.getParent();
+        if (parent == null || parent == 0) {
+            comment.setLevel(1);
+        } else {
+            comment.setLevel(2);
+        }
+        //如果是空，parent就是0
+        comment.setParentId(parent == null ? 0 : parent);
+        Long toUserId = commentParam.getToUserId();
+        comment.setToUid(toUserId == null ? 0 : toUserId);
+        this.commentMapper.insert(comment);
+        return Result.success(null);
     }
 
     //对list表中的comment进行判断

@@ -2,6 +2,7 @@ package com.alex.blog.controller;
 
 import com.alex.blog.service.CommentsService;
 import com.alex.blog.vo.Result;
+import com.alex.blog.vo.params.CommentParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
