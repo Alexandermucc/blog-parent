@@ -63,6 +63,7 @@ public class CategoryServiceImpl implements CategoryService {
         BeanUtils.copyProperties(category,categoryVo);
         //id不一致要重新设立
 //        categoryVo.setId(String.valueOf(category.getId()));
+        categoryVo.setId(String.valueOf(category.getId()));
         return categoryVo;
     }
     public List<CategoryVo> copyList(List<Category> categoryList){

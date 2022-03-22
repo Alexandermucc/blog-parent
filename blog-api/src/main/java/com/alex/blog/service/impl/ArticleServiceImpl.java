@@ -191,7 +191,7 @@ public class ArticleServiceImpl implements ArticleService {
          */
         Article article = new Article();
         article.setAuthorId(sysUser.getId());
-        article.setCategoryId(articleParam.getCategory().getId());
+        article.setCategoryId(Long.parseLong(articleParam.getCategory().getId()));
         article.setCreateDate(System.currentTimeMillis());
         article.setCommentCounts(0);
         article.setSummary(articleParam.getSummary());
@@ -211,7 +211,7 @@ public class ArticleServiceImpl implements ArticleService {
             for (TagVo tag : tags) {
                 ArticleTag articleTag = new ArticleTag();
                 articleTag.setArticleId(article.getId());
-                articleTag.setTagId(tag.getId());
+                articleTag.setTagId(Long.parseLong(tag.getId()));
                 this.articleTagMapper.insert(articleTag);
             }
         }
@@ -221,7 +221,7 @@ public class ArticleServiceImpl implements ArticleService {
         articleBody.setContentHtml(articleParam.getBody().getContentHtml());
         articleBody.setArticleId(article.getId());
         articleBodyMapper.insert(articleBody);
-//插入完之后再给一个id
+        //插入完之后再给一个id
         article.setBodyId(articleBody.getId());
         //MybatisPlus中的save方法什么时候执行insert，什么时候执行update
         // https://www.cxyzjd.com/article/Horse7/103868144
@@ -229,7 +229,7 @@ public class ArticleServiceImpl implements ArticleService {
         articleMapper.updateById(article);
 
         ArticleVo articleVo = new ArticleVo();
-        articleVo.setId(article.getId());
+        articleVo.setId(String.valueOf(article.getId()));
         return Result.success(articleVo);
     }
 
@@ -276,6 +276,9 @@ public class ArticleServiceImpl implements ArticleService {
      */
     private ArticleVo copy(Article article, boolean isTag, boolean isAuthor, boolean isBody, boolean isCategory) {
         ArticleVo articleVo = new ArticleVo();
+
+        articleVo.setId(String.valueOf(article.getId()));
+
         BeanUtils.copyProperties(article, articleVo);
 
         articleVo.setCreateDate(new DateTime(article.getCreateDate()).toString("yyyy-MM-dd HH:mm"));

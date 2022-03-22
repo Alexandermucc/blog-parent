@@ -10,6 +10,7 @@ import com.alex.blog.vo.Result;
 import com.alex.blog.vo.UserVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -73,7 +74,7 @@ public class SysUserServiceImpl implements SysUserService {
         }
 
         LoginUserVo loginUserVo = new LoginUserVo();
-        loginUserVo.setId(sysUser.getId());
+        loginUserVo.setId(String.valueOf(sysUser.getId()));
         loginUserVo.setNickname(sysUser.getNickname());
         loginUserVo.setAvatar(sysUser.getAvatar());
         loginUserVo.setAccount(sysUser.getAccount());
@@ -122,9 +123,11 @@ public class SysUserServiceImpl implements SysUserService {
             sysUser.setNickname("码神之路");
         }
         UserVo userVo = new UserVo();
-        userVo.setAvatar(sysUser.getAvatar());
-        userVo.setNickname(sysUser.getNickname());
-        userVo.setId(sysUser.getId());
+        BeanUtils.copyProperties(sysUser,userVo);
+//        userVo.setAvatar(sysUser.getAvatar());
+//        userVo.setNickname(sysUser.getNickname());
+//        userVo.setId(sysUser.getId());
+        userVo.setId(String.valueOf(sysUser.getId()));
         return userVo;
     }
 

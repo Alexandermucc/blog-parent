@@ -8,6 +8,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @author Alexandermucc
  * @date 2022/3/12 - 17:49 - 周六
  **/
-
+@Mapper
 public interface SysUserMapper extends BaseMapper<SysUser> {
 }
