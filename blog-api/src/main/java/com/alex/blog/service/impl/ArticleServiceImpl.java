@@ -17,6 +17,7 @@ import com.alex.blog.vo.TagVo;
 import com.alex.blog.vo.params.ArticleParam;
 import com.alex.blog.vo.params.PageParams;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
@@ -63,6 +64,21 @@ public class ArticleServiceImpl implements ArticleService {
      */
     @Override
     public Result listArticle(PageParams pageParams) {
+        Page<Article> page = new Page<>(pageParams.getPage(),pageParams.getPageSize());
+        IPage<Article> articleIPage = this.articleMapper.listArticle(
+                page,
+                pageParams.getCategoryId(),
+                pageParams.getTagId(),
+                pageParams.getYear(),
+                pageParams.getMonth());
+
+        List<Article> records = articleIPage.getRecords();
+        return Result.success(copyList(records,true,true));
+    }
+
+
+    /*@Override
+    public Result listArticle(PageParams pageParams) {
 
         Page<Article> page = new Page<>(pageParams.getPage(), pageParams.getPageSize());
         LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<>();
@@ -72,6 +88,24 @@ public class ArticleServiceImpl implements ArticleService {
             queryWrapper.eq(Article::getCategoryId, pageParams.getCategoryId());
         }
 
+        List<Long> articleIdList = new ArrayList<>();
+
+        if (pageParams.getTagId() != null){
+            // 加入标签 条件查询
+            // article表中 并没有tag字段 一篇文章有多个标签
+            // article_tag article_id 1:n tag_id
+            LambdaQueryWrapper<ArticleTag> articleTagLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            articleTagLambdaQueryWrapper.eq(ArticleTag::getTagId,pageParams.getTagId());
+            List<ArticleTag> articleTags = articleTagMapper.selectList(articleTagLambdaQueryWrapper);
+            for (ArticleTag articleTag : articleTags) {
+                articleIdList.add(articleTag.getArticleId());
+            }
+            if (articleIdList.size() > 0) {
+                // and id in(1,2,3)
+                queryWrapper.in(Article::getId,articleIdList);
+            }
+        }
+
         // 是否置顶排序 , order by create-date desc
         queryWrapper.orderByDesc(Article::getWeight, Article::getCreateDate);
         Page<Article> articlePage = articleMapper.selectPage(page, queryWrapper);
@@ -79,7 +113,7 @@ public class ArticleServiceImpl implements ArticleService {
         // List 不能直接返回
         List<ArticleVo> articleVoList = copyList(records, true, true);
         return Result.success(articleVoList);
-    }
+    }*/
 
     /**
      * 最热门的文章 根据浏览量排序
@@ -117,7 +151,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public Result listArchives() {
 
-        List<Archives> archivesList =  articleMapper.listArchives();
+        List<Archives> archivesList = articleMapper.listArchives();
         return Result.success(archivesList);
     }
 
