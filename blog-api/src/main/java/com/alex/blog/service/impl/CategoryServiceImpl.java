@@ -50,6 +50,12 @@ public class CategoryServiceImpl implements CategoryService {
         return Result.success(copyList(categories));
     }
 
+    @Override
+    public Result categoryDetailById(Long id) {
+        Category category = categoryMapper.selectById(id);
+        return Result.success(copy(category));
+    }
+
 
     //id不一致要重新设立
     public CategoryVo copy(Category category){
